@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Task, TaskStatus, TaskTag } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,7 @@ import { RichTextEditor } from "./RichTextEditor";
 const formSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters").max(100),
   description: z.string().optional(),
-  status: z.enum(["todo", "in-progress", "done"] as const),
+  status: z.enum(["todo", "in-progress", "done", "backlog"] as const),
   dueDate: z.date().optional(),
   tags: z.array(z.enum(["designing", "meeting", "research", "development", "planning"] as const)).optional(),
 });
@@ -160,6 +159,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                       <SelectItem value="todo">To-Do</SelectItem>
                       <SelectItem value="in-progress">In Progress</SelectItem>
                       <SelectItem value="done">Done</SelectItem>
+                      <SelectItem value="backlog">Backlog</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
