@@ -1,236 +1,234 @@
 
-import { useState } from "react";
-import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
-import Navbar from "@/components/Navbar";
-import Sidebar from "@/components/Sidebar";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/context/AuthContext";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
-const SettingsPage = () => {
+const profileFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email(),
+});
+
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
+const SettingsPage: React.FC = () => {
   const { user, logout } = useAuth();
-  
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [darkMode, setDarkMode] = useState(user?.preferences?.darkMode || false);
-  const [notifications, setNotifications] = useState(user?.preferences?.notifications || true);
-  
-  const handleUpdateProfile = () => {
-    // In a real app, this would update the user profile in the backend
+  const [darkMode, setDarkMode] = useState(true);
+  const [notifications, setNotifications] = useState(true);
+
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      name: user?.name || "",
+      email: user?.email || "",
+    },
+  });
+
+  function onSubmit(data: ProfileFormValues) {
     toast.success("Profile updated successfully");
-  };
-  
-  const handleChangePassword = () => {
-    // In a real app, this would send a password reset email
-    toast.success("Password reset link sent to your email");
-  };
-  
+    console.log(data);
+  }
+
   const handleDeleteAccount = () => {
-    // In a real app, this would delete the user account
-    setIsDeleteDialogOpen(false);
     toast.success("Account deleted successfully");
     logout();
   };
 
+  const handleToggleDarkMode = (checked: boolean) => {
+    setDarkMode(checked);
+    toast.success(`Dark mode ${checked ? 'enabled' : 'disabled'}`);
+  };
+
+  const handleToggleNotifications = (checked: boolean) => {
+    setNotifications(checked);
+    toast.success(`Notifications ${checked ? 'enabled' : 'disabled'}`);
+  };
+
   return (
-    <div className="flex h-screen">
-      <Sidebar onOpenAddTask={() => {}} />
-      
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <Navbar />
-        
-        <div className="p-4 sm:p-6 overflow-auto custom-scrollbar">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">Settings</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your account and preferences
-            </p>
-          </div>
-          
-          <Separator className="mb-6" />
-          
-          <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="preferences">Preferences</TabsTrigger>
-              <TabsTrigger value="account">Account</TabsTrigger>
-            </TabsList>
-            
-            {/* Profile Tab */}
-            <TabsContent value="profile" className="space-y-6 animate-fade-in">
-              <div className="max-w-md">
-                {/* Profile Photo */}
-                <div className="mb-6">
-                  <Label>Profile Photo</Label>
-                  <div className="mt-2 flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                      {user?.avatar ? (
-                        <img 
-                          src={user.avatar} 
-                          alt={user.name} 
-                          className="h-full w-full object-cover" 
-                        />
-                      ) : (
-                        <span className="text-lg font-medium">{user?.name.charAt(0)}</span>
-                      )}
-                    </div>
-                    <Button variant="outline" disabled>
-                      Change Photo
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Name */}
-                <div className="mb-4">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    className="mt-1"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-                
-                {/* Email */}
-                <div className="mb-6">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    className="mt-1"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                
-                <Button onClick={handleUpdateProfile}>
-                  Save Changes
-                </Button>
-              </div>
-            </TabsContent>
-            
-            {/* Preferences Tab */}
-            <TabsContent value="preferences" className="space-y-6 animate-fade-in">
-              <div className="max-w-md">
-                <div className="space-y-4">
-                  {/* Dark Mode */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Dark Mode</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Toggle dark mode appearance
-                      </p>
-                    </div>
-                    <Switch
-                      checked={darkMode}
-                      onCheckedChange={setDarkMode}
-                    />
-                  </div>
-                  
-                  {/* Notifications */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Notifications</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Receive notifications for tasks and deadlines
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications}
-                      onCheckedChange={setNotifications}
-                    />
-                  </div>
-                  
-                  <Separator />
-                  
-                  {/* Task Defaults */}
+    <div className="container mx-auto py-10">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your account settings and preferences.
+          </p>
+        </div>
+
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full md:w-[400px] grid-cols-2">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile</CardTitle>
+                <CardDescription>
+                  Update your personal information.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-4 mb-6">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={user?.avatar} />
+                    <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
+                  </Avatar>
                   <div>
-                    <h3 className="font-medium mb-2">Default Task View</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" className="justify-start">
-                        Board View
-                      </Button>
-                      <Button variant="outline" className="justify-start">
-                        List View
-                      </Button>
-                    </div>
+                    <h3 className="font-medium">{user?.name}</h3>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
                   </div>
-                  
-                  <Button className="mt-2">
-                    Save Preferences
+                </div>
+
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit">Update profile</Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Account</CardTitle>
+                <CardDescription>
+                  Manage your account settings.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="space-y-1">
+                    <h4 className="font-medium">Log out</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Sign out of your account.
+                    </p>
+                  </div>
+                  <Button variant="outline" onClick={logout}>
+                    Log out
                   </Button>
                 </div>
-              </div>
-            </TabsContent>
-            
-            {/* Account Tab */}
-            <TabsContent value="account" className="space-y-6 animate-fade-in">
-              <div className="max-w-md">
-                {/* Change Password */}
-                <div className="mb-6">
-                  <h3 className="font-medium mb-2">Change Password</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    We'll send you an email with a link to change your password
-                  </p>
-                  <Button variant="outline" onClick={handleChangePassword}>
-                    Reset Password
-                  </Button>
-                </div>
-                
-                <Separator />
-                
-                {/* Delete Account */}
-                <div className="mt-6">
-                  <h3 className="font-medium mb-2">Delete Account</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Permanently delete your account and all of your data
-                  </p>
-                  <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+
+                <div className="flex justify-between items-center">
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-destructive">Delete Account</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently delete your account and all data.
+                    </p>
+                  </div>
+                  <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive">
-                        Delete Account
-                      </Button>
+                      <Button variant="destructive">Delete Account</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently delete your
-                          account and remove all of your data from our servers.
+                          account and remove all your data.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDeleteAccount}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
+                        <AlertDialogAction onClick={handleDeleteAccount}>
+                          Delete Account
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Preferences Tab */}
+          <TabsContent value="preferences" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Appearance</CardTitle>
+                <CardDescription>
+                  Customize how the application looks.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="dark-mode">Dark Mode</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Enable dark mode for a better experience at night.
+                    </p>
+                  </div>
+                  <Switch
+                    id="dark-mode"
+                    checked={darkMode}
+                    onCheckedChange={handleToggleDarkMode}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Notifications</CardTitle>
+                <CardDescription>
+                  Configure how you receive notifications.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="notifications">Enable Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified about task updates and reminders.
+                    </p>
+                  </div>
+                  <Switch
+                    id="notifications"
+                    checked={notifications}
+                    onCheckedChange={handleToggleNotifications}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
