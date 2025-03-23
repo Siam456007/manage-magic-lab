@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { PlusCircle, Search, Filter, Calendar, Sun, Moon } from "lucide-react";
+import { PlusCircle, Search, Filter, Calendar as CalendarIcon, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { format, isAfter, isBefore, parseISO } from "date-fns";
 import { Task } from "@/lib/types";
@@ -267,7 +266,7 @@ const Dashboard = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="gap-2">
-                    <Calendar className="h-4 w-4" />
+                    <CalendarIcon className="h-4 w-4" />
                     Date Filter
                   </Button>
                 </PopoverTrigger>

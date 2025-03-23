@@ -10,7 +10,7 @@ export interface User {
   };
 }
 
-export type TaskStatus = 'todo' | 'in-progress' | 'done';
+export type TaskStatus = 'todo' | 'in-progress' | 'done' | 'backlog';
 
 export type TaskTag = 'designing' | 'meeting' | 'research' | 'development' | 'planning';
 
