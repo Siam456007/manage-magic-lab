@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { motion } from "framer-motion";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface TaskColumnProps {
   column: Column;
@@ -18,7 +19,7 @@ interface TaskColumnProps {
   onDeleteTask: (id: string) => void;
   onEditTask: (task: Task) => void;
   onDragStart: (task: Task) => void;
-  onDragOver: (columnId: string) => void;
+  onDragOver: (columnId: string, index?: number) => void;
 }
 
 const TaskColumn: React.FC<TaskColumnProps> = ({
@@ -84,10 +85,10 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
           </DropdownMenu>
         </div>
       </div>
-      <div className="flex-1 overflow-auto p-2 custom-scrollbar">
+      <ScrollArea className="flex-1 p-2">
         <div className="space-y-3">
           {column.tasks.length > 0 ? (
-            column.tasks.map((task) => (
+            column.tasks.map((task, index) => (
               <motion.div
                 key={task.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -96,6 +97,10 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
                 transition={{ duration: 0.2 }}
                 draggable
                 onDragStart={() => onDragStart(task)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  onDragOver(column.id, index);
+                }}
               >
                 <TaskCard
                   task={task}
@@ -110,7 +115,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
             </div>
           )}
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 };

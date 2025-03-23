@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PlusCircle, Search, Filter, Calendar as CalendarIcon, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ import AddTaskModal from "@/components/AddTaskModal";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -156,32 +158,44 @@ const Dashboard = () => {
     setDraggingTask(task);
   };
 
-  const handleDragOver = (columnId: string) => {
-    if (draggingTask && draggingTask.status !== columnId) {
-      const updatedTask = {...draggingTask, status: columnId as Task["status"]};
-      
-      // Remove from original column
-      const originalColumn = columns.find(col => col.id === draggingTask.status);
-      if (originalColumn) {
-        originalColumn.tasks = originalColumn.tasks.filter(t => t.id !== draggingTask.id);
-      }
-      
-      // Add to new column
-      const targetColumn = columns.find(col => col.id === columnId);
-      if (targetColumn) {
-        targetColumn.tasks = [...targetColumn.tasks, updatedTask];
-      }
-      
-      setDraggingTask(updatedTask);
-      
-      // Force rerender
-      setColumns([...columns]);
-      
-      toast.success(`Task moved to ${columnId.replace('-', ' ')}`);
+  const handleDragOver = (columnId: string, targetIndex?: number) => {
+    if (!draggingTask) return;
+
+    const sourceColumnId = draggingTask.status;
+    const updatedColumns = [...columns];
+    
+    // Find source and target columns
+    const sourceColumn = updatedColumns.find(col => col.id === sourceColumnId);
+    const targetColumn = updatedColumns.find(col => col.id === columnId);
+    
+    if (!sourceColumn || !targetColumn) return;
+    
+    // Create updated task with new status
+    const updatedTask = {...draggingTask, status: columnId as Task["status"]};
+    
+    // Remove task from source column
+    sourceColumn.tasks = sourceColumn.tasks.filter(t => t.id !== draggingTask.id);
+    
+    // Insert task at specific position in target column
+    if (targetIndex !== undefined) {
+      targetColumn.tasks = [
+        ...targetColumn.tasks.slice(0, targetIndex),
+        updatedTask,
+        ...targetColumn.tasks.slice(targetIndex)
+      ];
+    } else {
+      // If no specific index, add to end of column
+      targetColumn.tasks = [...targetColumn.tasks, updatedTask];
     }
+    
+    setDraggingTask(updatedTask);
+    setColumns(updatedColumns);
   };
 
   const handleDrop = () => {
+    if (draggingTask) {
+      toast.success(`Task moved to ${draggingTask.status.replace('-', ' ')}`);
+    }
     setDraggingTask(null);
   };
 
@@ -198,7 +212,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex h-screen" onDrop={handleDrop}>
+    <div className="flex h-screen overflow-hidden" onDrop={handleDrop}>
       <Sidebar onOpenAddTask={() => {
         setSelectedStatus("todo");
         setTaskToEdit(undefined);
@@ -208,7 +222,7 @@ const Dashboard = () => {
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <Navbar />
         
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 flex flex-col h-full overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
             <div>
               <h1 className="text-2xl font-bold">Task Dashboard</h1>
@@ -308,19 +322,21 @@ const Dashboard = () => {
           
           <Separator className="mb-6" />
           
-          <div className="flex gap-4 pb-4 overflow-x-auto custom-scrollbar">
-            {columns.map(column => (
-              <TaskColumn
-                key={column.id}
-                column={column}
-                onAddTask={handleAddTask}
-                onDeleteTask={handleDeleteTask}
-                onEditTask={handleEditTask}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-              />
-            ))}
-          </div>
+          <ScrollArea className="flex-1">
+            <div className="flex gap-4 pb-4 min-w-max">
+              {columns.map(column => (
+                <TaskColumn
+                  key={column.id}
+                  column={column}
+                  onAddTask={handleAddTask}
+                  onDeleteTask={handleDeleteTask}
+                  onEditTask={handleEditTask}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                />
+              ))}
+            </div>
+          </ScrollArea>
         </div>
       </div>
       
