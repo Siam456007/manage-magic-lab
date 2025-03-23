@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,8 @@ import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
+import Sidebar from "@/components/Sidebar";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -56,14 +57,22 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account settings and preferences.
-          </p>
-        </div>
+    <div className="flex h-screen">
+      <Sidebar onOpenAddTask={() => {
+        toast.info("You can't add tasks from the settings page. Please go to the dashboard.");
+      }} />
+      
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <Navbar />
+        
+        <div className="container mx-auto py-10 px-4 overflow-y-auto">
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold">Settings</h1>
+              <p className="text-muted-foreground">
+                Manage your account settings and preferences.
+              </p>
+            </div>
 
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="grid w-full md:w-[400px] grid-cols-2">
@@ -231,6 +240,7 @@ const SettingsPage: React.FC = () => {
         </Tabs>
       </div>
     </div>
+  </div>
   );
 };
 

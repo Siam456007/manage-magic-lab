@@ -30,7 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenAddTask }) => {
   return (
     <div
       className={cn(
-        "flex flex-col h-screen border-r bg-card transition-all duration-300",
+        "flex flex-col h-screen border-r bg-card transition-all duration-300 relative z-30",
         collapsed ? "w-[70px]" : "w-[240px]"
       )}
     >
