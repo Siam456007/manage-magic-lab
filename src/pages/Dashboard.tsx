@@ -1,35 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { PlusCircle, Search, Filter, Calendar as CalendarIcon, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
-import { format, isAfter, isBefore, parseISO } from "date-fns";
+import { isAfter, isBefore } from "date-fns";
 import { Task } from "@/lib/types";
 import { getColumns } from "@/lib/data";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
-import TaskColumn from "@/components/TaskColumn";
 import AddTaskModal from "@/components/AddTaskModal";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { useTheme } from "@/components/ThemeProvider";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import TaskBoard from "@/components/dashboard/TaskBoard";
 
 const Dashboard = () => {
   const [columns, setColumns] = useState(getColumns());
@@ -46,8 +26,6 @@ const Dashboard = () => {
     from: undefined,
     to: undefined,
   });
-  const [draggingTask, setDraggingTask] = useState<Task | null>(null);
-  const { theme, setTheme } = useTheme();
 
   // Apply filters to columns
   useEffect(() => {
@@ -153,52 +131,6 @@ const Dashboard = () => {
     }
   };
 
-  // Drag and drop handlers
-  const handleDragStart = (task: Task) => {
-    setDraggingTask(task);
-  };
-
-  const handleDragOver = (columnId: string, targetIndex?: number) => {
-    if (!draggingTask) return;
-
-    const sourceColumnId = draggingTask.status;
-    const updatedColumns = [...columns];
-    
-    // Find source and target columns
-    const sourceColumn = updatedColumns.find(col => col.id === sourceColumnId);
-    const targetColumn = updatedColumns.find(col => col.id === columnId);
-    
-    if (!sourceColumn || !targetColumn) return;
-    
-    // Create updated task with new status
-    const updatedTask = {...draggingTask, status: columnId as Task["status"]};
-    
-    // Remove task from source column
-    sourceColumn.tasks = sourceColumn.tasks.filter(t => t.id !== draggingTask.id);
-    
-    // Insert task at specific position in target column
-    if (targetIndex !== undefined) {
-      targetColumn.tasks = [
-        ...targetColumn.tasks.slice(0, targetIndex),
-        updatedTask,
-        ...targetColumn.tasks.slice(targetIndex)
-      ];
-    } else {
-      // If no specific index, add to end of column
-      targetColumn.tasks = [...targetColumn.tasks, updatedTask];
-    }
-    
-    setDraggingTask(updatedTask);
-    setColumns(updatedColumns);
-  };
-
-  const handleDrop = () => {
-    if (draggingTask) {
-      toast.success(`Task moved to ${draggingTask.status.replace('-', ' ')}`);
-    }
-    setDraggingTask(null);
-  };
-
   const clearFilters = () => {
     setSearchTerm("");
     setStatusFilter("all");
@@ -207,136 +139,42 @@ const Dashboard = () => {
     setColumns(getColumns());
   };
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+  const handleOpenAddTask = () => {
+    setSelectedStatus("todo");
+    setTaskToEdit(undefined);
+    setIsAddTaskModalOpen(true);
   };
 
   return (
-    <div className="flex h-screen overflow-hidden" onDrop={handleDrop}>
-      <Sidebar onOpenAddTask={() => {
-        setSelectedStatus("todo");
-        setTaskToEdit(undefined);
-        setIsAddTaskModalOpen(true);
-      }} />
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar onOpenAddTask={handleOpenAddTask} />
       
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <Navbar />
         
         <div className="p-4 sm:p-6 flex flex-col h-full overflow-hidden">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-            <div>
-              <h1 className="text-2xl font-bold">Task Dashboard</h1>
-              <p className="text-muted-foreground mt-1">
-                Manage and organize your tasks
-              </p>
-            </div>
-            <div className="flex flex-col md:flex-row items-center gap-2">
-              <div className="relative w-full md:w-auto">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search tasks..."
-                  className="pl-8 w-full md:w-[200px]"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              {/* Filters dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                  <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                    <DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="todo">To-Do</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="in-progress">In Progress</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="done">Done</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
-                  <DropdownMenuRadioGroup value={tagFilter} onValueChange={setTagFilter}>
-                    <DropdownMenuRadioItem value="all">All Tags</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="designing">Designing</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="meeting">Meeting</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="research">Research</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="development">Development</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="planning">Planning</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem onClick={clearFilters}>Clear Filters</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* Date range filter */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <CalendarIcon className="h-4 w-4" />
-                    Date Filter
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={dateRange.from}
-                    selected={dateRange}
-                    onSelect={setDateRange as any}
-                    numberOfMonths={2}
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-              
-              {/* Theme toggle */}
-              <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                {theme === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
-              
-              <Button 
-                onClick={() => {
-                  setSelectedStatus("todo");
-                  setTaskToEdit(undefined);
-                  setIsAddTaskModalOpen(true);
-                }}
-                className="flex items-center"
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Task
-              </Button>
-            </div>
-          </div>
+          <DashboardHeader 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            tagFilter={tagFilter}
+            setTagFilter={setTagFilter}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            clearFilters={clearFilters}
+            onOpenAddTask={handleOpenAddTask}
+          />
           
           <Separator className="mb-6" />
           
-          <ScrollArea className="flex-1">
-            <div className="flex gap-4 pb-4 min-w-max">
-              {columns.map(column => (
-                <TaskColumn
-                  key={column.id}
-                  column={column}
-                  onAddTask={handleAddTask}
-                  onDeleteTask={handleDeleteTask}
-                  onEditTask={handleEditTask}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                />
-              ))}
-            </div>
-          </ScrollArea>
+          <TaskBoard 
+            columns={columns}
+            setColumns={setColumns}
+            onAddTask={handleAddTask}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+          />
         </div>
       </div>
       
