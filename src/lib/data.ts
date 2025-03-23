@@ -38,7 +38,7 @@ export const mockTasks: Task[] = [
     id: "task-3",
     title: "Plan a trip to another country",
     description: "",
-    status: "pending",
+    status: "todo",
     createdAt: new Date("2023-09-10"),
     dueDate: new Date("2023-09-10"),
   },
@@ -46,7 +46,7 @@ export const mockTasks: Task[] = [
     id: "task-4",
     title: "Dinner with Kelly Young",
     description: "",
-    status: "complete",
+    status: "done",
     createdAt: new Date("2023-08-08"),
     dueDate: new Date("2023-08-08"),
   },
@@ -54,7 +54,7 @@ export const mockTasks: Task[] = [
     id: "task-5",
     title: "Launch New SEO Wordpress Theme",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliq ua.",
-    status: "complete",
+    status: "done",
     createdAt: new Date("2023-08-09"),
     dueDate: new Date("2023-08-09"),
   },
@@ -62,14 +62,14 @@ export const mockTasks: Task[] = [
     id: "task-6",
     title: "Create wireframes for homepage redesign",
     description: "Create low-fidelity wireframes for the new homepage design based on user feedback.",
-    status: "backlog",
+    status: "todo",
     createdAt: new Date("2023-09-15"),
   },
   {
     id: "task-7",
     title: "Research competitor analytics tools",
     description: "Analyze main competitors' analytics implementations and create a comparison report.",
-    status: "backlog",
+    status: "todo",
     createdAt: new Date("2023-09-12"),
     tags: ["research"],
   },
@@ -77,7 +77,7 @@ export const mockTasks: Task[] = [
     id: "task-8",
     title: "Implement user authentication system",
     description: "Develop and integrate a secure authentication system with JWT tokens.",
-    status: "backlog",
+    status: "todo",
     createdAt: new Date("2023-09-05"),
     tags: ["development"],
   },
@@ -85,14 +85,14 @@ export const mockTasks: Task[] = [
     id: "task-9",
     title: "Create project documentation",
     description: "Document all API endpoints and data structures for the developer team.",
-    status: "backlog",
+    status: "todo",
     createdAt: new Date("2023-09-20"),
   },
   {
     id: "task-10",
     title: "Plan Q4 marketing strategy",
     description: "Develop a comprehensive marketing plan for the upcoming quarter.",
-    status: "backlog",
+    status: "todo",
     createdAt: new Date("2023-09-18"),
     tags: ["planning"],
   },
@@ -102,31 +102,26 @@ export const mockTasks: Task[] = [
 export const getColumns = (): Column[] => {
   return [
     {
+      id: "todo",
+      title: "To-Do",
+      tasks: mockTasks.filter(task => task.status === "todo"),
+    },
+    {
       id: "in-progress",
       title: "In Progress",
       tasks: mockTasks.filter(task => task.status === "in-progress"),
     },
     {
-      id: "pending",
-      title: "Pending",
-      tasks: mockTasks.filter(task => task.status === "pending"),
-    },
-    {
-      id: "complete",
-      title: "Complete",
-      tasks: mockTasks.filter(task => task.status === "complete"),
-    },
-    {
-      id: "working",
-      title: "Working",
-      tasks: mockTasks.filter(task => task.status === "working"),
+      id: "done",
+      title: "Done",
+      tasks: mockTasks.filter(task => task.status === "done"),
     },
   ];
 };
 
 // Get backlog tasks
 export const getBacklogTasks = (): Task[] => {
-  return mockTasks.filter(task => task.status === "backlog");
+  return mockTasks.filter(task => task.status === "todo" && !task.dueDate);
 };
 
 // Get tasks by status
@@ -137,27 +132,21 @@ export const getTasksByStatus = (status: string): Task[] => {
 // Task statistics for the summary page
 export const getTaskStatistics = () => {
   const total = mockTasks.length;
-  const completed = mockTasks.filter(task => task.status === "complete").length;
+  const completed = mockTasks.filter(task => task.status === "done").length;
   const inProgress = mockTasks.filter(task => task.status === "in-progress").length;
-  const pending = mockTasks.filter(task => task.status === "pending").length;
-  const backlog = mockTasks.filter(task => task.status === "backlog").length;
-  const working = mockTasks.filter(task => task.status === "working").length;
+  const todo = mockTasks.filter(task => task.status === "todo").length;
   
   return {
     total,
     completed,
     completionRate: (completed / total) * 100,
     inProgress,
-    pending,
-    backlog,
-    working,
+    todo,
     // Data for charts
     statusDistribution: [
-      { name: "Complete", value: completed },
+      { name: "Done", value: completed },
       { name: "In Progress", value: inProgress },
-      { name: "Pending", value: pending },
-      { name: "Backlog", value: backlog },
-      { name: "Working", value: working },
+      { name: "To-Do", value: todo },
     ],
     weeklyProgress: [
       { name: "Mon", tasks: 3 },

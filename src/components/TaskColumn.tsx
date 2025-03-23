@@ -10,12 +10,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { motion } from "framer-motion";
 
 interface TaskColumnProps {
   column: Column;
   onAddTask: (status: string) => void;
   onDeleteTask: (id: string) => void;
   onEditTask: (task: Task) => void;
+  onDragStart: (task: Task) => void;
+  onDragOver: (columnId: string) => void;
 }
 
 const TaskColumn: React.FC<TaskColumnProps> = ({
@@ -23,24 +26,30 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
   onAddTask,
   onDeleteTask,
   onEditTask,
+  onDragStart,
+  onDragOver,
 }) => {
   const getStatusColor = (status: string) => {
     switch(status) {
       case "in-progress":
         return "bg-status-in-progress";
-      case "pending":
-        return "bg-status-pending";
-      case "complete":
+      case "todo":
+        return "bg-amber-500";
+      case "done":
         return "bg-status-complete";
-      case "working":
-        return "bg-status-working";
       default:
         return "bg-muted";
     }
   };
 
   return (
-    <div className="flex h-full w-[300px] shrink-0 flex-col rounded-lg bg-card">
+    <div 
+      className="flex h-full w-[300px] shrink-0 flex-col rounded-lg bg-card"
+      onDragOver={(e) => {
+        e.preventDefault();
+        onDragOver(column.id);
+      }}
+    >
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-2">
           <div className={cn("h-3 w-3 rounded-full", getStatusColor(column.id))} />
@@ -79,12 +88,21 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
         <div className="space-y-3">
           {column.tasks.length > 0 ? (
             column.tasks.map((task) => (
-              <TaskCard
+              <motion.div
                 key={task.id}
-                task={task}
-                onDelete={onDeleteTask}
-                onEdit={onEditTask}
-              />
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                draggable
+                onDragStart={() => onDragStart(task)}
+              >
+                <TaskCard
+                  task={task}
+                  onDelete={onDeleteTask}
+                  onEdit={onEditTask}
+                />
+              </motion.div>
             ))
           ) : (
             <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-muted-foreground/20 p-3 text-center text-sm text-muted-foreground">

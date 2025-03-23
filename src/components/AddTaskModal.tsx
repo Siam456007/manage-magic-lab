@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -37,11 +36,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { RichTextEditor } from "./RichTextEditor";
 
 const formSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters").max(100),
   description: z.string().optional(),
-  status: z.enum(["backlog", "in-progress", "pending", "complete", "working"] as const),
+  status: z.enum(["todo", "in-progress", "done"] as const),
   dueDate: z.date().optional(),
   tags: z.array(z.enum(["designing", "meeting", "research", "development", "planning"] as const)).optional(),
 });
@@ -60,10 +60,11 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
   isOpen,
   onClose,
   onAddTask,
-  status = "backlog",
+  status = "todo",
   taskToEdit,
 }) => {
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>(taskToEdit?.tags || []);
+  const [description, setDescription] = useState(taskToEdit?.description || "");
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -80,7 +81,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
     const newTask: Task = {
       id: taskToEdit?.id || `task-${Date.now()}`,
       title: values.title,
-      description: values.description,
+      description: description,
       status: values.status,
       dueDate: values.dueDate,
       createdAt: taskToEdit?.createdAt || new Date(),
@@ -92,6 +93,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
     onClose();
     form.reset();
     setSelectedTags([]);
+    setDescription("");
   };
 
   const toggleTag = (tag: TaskTag) => {
@@ -104,7 +106,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{taskToEdit ? "Edit Task" : "Add New Task"}</DialogTitle>
           <DialogDescription>
@@ -130,23 +132,14 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Enter task description (optional)" 
-                      {...field} 
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <RichTextEditor 
+                value={description} 
+                onChange={setDescription}
+                placeholder="Enter task description (optional)"
+              />
+            </FormItem>
             
             <FormField
               control={form.control}
@@ -164,11 +157,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="backlog">Backlog</SelectItem>
+                      <SelectItem value="todo">To-Do</SelectItem>
                       <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="working">Working</SelectItem>
-                      <SelectItem value="complete">Complete</SelectItem>
+                      <SelectItem value="done">Done</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -201,7 +192,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
                       <Calendar
                         mode="single"
                         selected={field.value}
